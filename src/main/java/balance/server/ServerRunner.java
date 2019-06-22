@@ -1,0 +1,47 @@
+package balance.server;
+
+import balance.server.inters.Server;
+import balance.server.inters.impl.ServerImpl;
+import balance.server.model.ServerData;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ServerRunner {
+
+    private static final int  SERVER_QTY = 2;
+    private static final String  ZOOKEEPER_SERVER = "hadoop102:2181,hadoop103:2181,hadoop104:2181";
+    private static final String  SERVERS_PATH = "/servers";
+
+    public static void main(String[] args) {
+
+        List<Thread> threadList = new ArrayList<Thread>();
+
+        for(int i = 0; i < SERVER_QTY; i++){
+
+            final Integer count = i;
+            Thread thread = new Thread(new Runnable() {
+
+                public void run() {
+                    ServerData sd = new ServerData();
+                    sd.setBalance(0);
+                    sd.setHost("127.0.0.1");
+                    sd.setPort(6000+count+"");
+                    Server server = new ServerImpl(ZOOKEEPER_SERVER, SERVERS_PATH, sd);
+                    server.bind();
+                }
+            });
+
+            threadList.add(thread);
+            thread.start();
+        }
+
+        for (int i=0; i<threadList.size(); i++){
+            try {
+                threadList.get(i).join();
+            } catch (InterruptedException ignore) {
+                //
+            }
+        }
+    }
+}
